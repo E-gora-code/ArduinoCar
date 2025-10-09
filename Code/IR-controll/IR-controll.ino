@@ -1,15 +1,12 @@
 #include <AccelStepper.h>
 int cou = 0;
 // Настройка пинов (тип FULL4WIRE = 4-проводной униполярный мотор)
-int stp_1 = 2;
-int stp_2 = 3;
-int stp_3 = 4;
-int stp_4 = 5;
-AccelStepper stepper(AccelStepper::FULL4WIRE, stp_1, stp_3, stp_2, stp_4);
+int stp1_pins[] = {2,3,4,5};
+AccelStepper stepper(AccelStepper::FULL4WIRE, stp1_pins[0], stp1_pins[2], stp1_pins[1], stp1_pins[3]);
 
 void setup() {
-  stepper.setMaxSpeed(500);    // Макс. скорость (шагов/сек)
-  stepper.setAcceleration(200); // Ускорение (шагов/сек²)
+  stepper.setMaxSpeed(400);    // Макс. скорость (шагов/сек)
+  stepper.setAcceleration(50); // Ускорение (шагов/сек²)
 }
 
 void loop() {
@@ -23,7 +20,7 @@ void loop() {
   }
   else{
     delay(10000);
-    disableMotor();
+    disableMotor(stp1_pins);
     while(true);
   }
 }
@@ -32,9 +29,9 @@ void wait_step(){
     stepper.run(); 
   }
 }
-void disableMotor() {
-  digitalWrite(stp_1, LOW);
-  digitalWrite(stp_2, LOW);
-  digitalWrite(stp_3, LOW);
-  digitalWrite(stp_4, LOW);
+void disableMotor(int mot[]) {
+  digitalWrite(mot[0], LOW);
+  digitalWrite(mot[1], LOW);
+  digitalWrite(mot[2], LOW);
+  digitalWrite(mot[3], LOW);
 }
