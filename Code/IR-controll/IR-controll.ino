@@ -6,7 +6,7 @@ int stp_L_pins[] = {6,7,8,9};
 AccelStepper stepper_Right(AccelStepper::FULL4WIRE, stp_R_pins[0], stp_R_pins[2], stp_R_pins[1], stp_R_pins[3]);
 AccelStepper stepper_Left(AccelStepper::FULL4WIRE, stp_L_pins[0], stp_L_pins[2], stp_L_pins[1], stp_L_pins[3]);
 
-int speed = 600+200;
+int speed = 200;
 int acceleration = 50;
 
 void setup() {
