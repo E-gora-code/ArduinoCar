@@ -1,32 +1,49 @@
 #include <AccelStepper.h>
 int cou = 0;
-// Настройка пинов (тип FULL4WIRE = 4-проводной униполярный мотор)
-int stp1_pins[] = {2,3,4,5};
-AccelStepper stepper(AccelStepper::FULL4WIRE, stp1_pins[0], stp1_pins[2], stp1_pins[1], stp1_pins[3]);
+
+int stp_R_pins[] = {2,3,4,5};
+int stp_L_pins[] = {6,7,8,9};
+AccelStepper stepper_Right(AccelStepper::FULL4WIRE, stp_R_pins[0], stp_R_pins[2], stp_R_pins[1], stp_R_pins[3]);
+AccelStepper stepper_Left(AccelStepper::FULL4WIRE, stp_L_pins[0], stp_L_pins[2], stp_L_pins[1], stp_L_pins[3]);
+
+int speed = 400;
+int acceleration = 50;
 
 void setup() {
-  stepper.setMaxSpeed(400);    // Макс. скорость (шагов/сек)
-  stepper.setAcceleration(50); // Ускорение (шагов/сек²)
+  stepper_Right.setMaxSpeed(speed);
+  stepper_Right.setAcceleration(acceleration);
+  stepper_Left.setMaxSpeed(speed);
+  stepper_Left.setAcceleration(acceleration);
 }
 
 void loop() {
-  stepper.run();  // Запуск мотора (неблокирующий)
+  stepper_Right.run();
+  stepper_Left.run();
   if(cou<10){
-    stepper.moveTo(2048*1);        // Целевая позиция (1 оборот ≈ 2048 шагов)
-    wait_step();
-    stepper.moveTo(0);
-    wait_step();
+    stepper_Right.moveTo(2048*1);        // Целевая позиция (1 оборот ≈ 2048 шагов)
+    stepper_Left.moveTo(2048*1); 
+    wait_all_step();
+    stepper_Right.moveTo(0);
+    stepper_Left.moveTo(0);
+    wait_all_step();
     cou +=1;
   }
   else{
     delay(10000);
-    disableMotor(stp1_pins);
+    disableMotor(stp_R_pins);
+    disableMotor(stp_L_pins);
     while(true);
   }
 }
-void wait_step(){
+void wait_one_step(AccelStepper stepper){
   while(stepper.distanceToGo()!=0){
     stepper.run(); 
+  }
+}
+void wait_all_step(){
+  while((stepper_Right.distanceToGo()!=0)||(stepper_Left.distanceToGo()!=0)){
+    stepper_Right.run(); 
+    stepper_Left.run(); 
   }
 }
 void disableMotor(int mot[]) {
