@@ -6,7 +6,7 @@ int stp_L_pins[] = {6,7,8,9};
 AccelStepper stepper_Right(AccelStepper::FULL4WIRE, stp_R_pins[0], stp_R_pins[2], stp_R_pins[1], stp_R_pins[3]);
 AccelStepper stepper_Left(AccelStepper::FULL4WIRE, stp_L_pins[0], stp_L_pins[2], stp_L_pins[1], stp_L_pins[3]);
 
-int speed = 400;
+int speed = 600+200;
 int acceleration = 50;
 
 void setup() {
@@ -20,8 +20,8 @@ void loop() {
   stepper_Right.run();
   stepper_Left.run();
   if(cou<10){
-    stepper_Right.moveTo(2048*1);        // Целевая позиция (1 оборот ≈ 2048 шагов)
-    stepper_Left.moveTo(2048*1); 
+    stepper_Right.moveTo(2048*10);        // Целевая позиция (1 оборот ≈ 2048 шагов)
+    stepper_Left.moveTo(-2048*10); 
     wait_all_step();
     stepper_Right.moveTo(0);
     stepper_Left.moveTo(0);
