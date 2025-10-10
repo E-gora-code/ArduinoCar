@@ -9,16 +9,19 @@ AccelStepper stepper_Left(AccelStepper::FULL4WIRE, stp_L_pins[0], stp_L_pins[2],
 
 int RECV_PIN = 10;
 
-int speed = 200;
+int speed = 400;
 int acceleration = 50;
 
 
 IRrecv irrecv(RECV_PIN);
 decode_results  ir_results;
 
-#define IR_forward = 0xFF18E7
-#define IR_stop = 0xFF38C7
+#define IR_forward 0xFF18E7
+#define IR_stop 0xFF38C7
+#define IR_backwards 0xFF4AB5
 
+bool is_moving = false;
+unsigned long last_stopped = 0;
 void setup() {
   Serial.begin(9600);
   irrecv.enableIRIn();
@@ -33,6 +36,27 @@ void setup() {
 
 void loop() {
   all_run();
+  if(ir_results.value == IR_forward){
+    stepper_Right.moveTo(stepper_Right.currentPosition()+10000);
+    is_moving = true;
+  }
+  else if(ir_results.value == IR_backwards){
+    stepper_Right.moveTo(stepper_Right.currentPosition()-10000);
+    is_moving = true;
+  }
+  else{
+    if(ir_results.value == IR_stop){
+      stepper_Right.moveTo(stepper_Right.currentPosition());
+      if(is_moving == true){
+        last_stopped = millis();
+        is_moving = false;
+      }
+    }
+  }
+  if((!is_moving)&&(millis()-last_stopped >10000)){
+    disableMotor(stp_R_pins);
+    disableMotor(stp_L_pins);
+  }
   // if(cou<10){
   //   stepper_Right.moveTo(2048*10);        // Целевая позиция (1 оборот ≈ 2048 шагов)
   //   stepper_Left.moveTo(-2048*10); 
