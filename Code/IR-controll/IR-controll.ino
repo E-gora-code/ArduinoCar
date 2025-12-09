@@ -15,7 +15,10 @@ int acceleration = 50;
 
 IRrecv irrecv(RECV_PIN);
 decode_results  ir_results,_ir_results;
-
+int move_dist = 0;
+int move_dist_change = 100;
+int move_count_id_now = 0;
+int move_count_id_last = 0;
 #define IR_blank 0xFFFFFFFF
 
 #define IR_forward 0xFF18E7
@@ -23,11 +26,13 @@ decode_results  ir_results,_ir_results;
 #define IR_backwards 0xFF4AB5
 #define IR_right 0xFF5AA5
 #define IR_left 0xFF10EF
-const uint32_t IR_all[]={IR_blank,IR_forward,IR_stop,IR_backwards,IR_right,IR_left};
-int IR_all_size = 6;
+#define IR_more_dist 0xFFFFFFFF
+#define IR_less_dist 0xFFFFFFFF
+const uint32_t IR_all[]={IR_blank,IR_forward,IR_stop,IR_backwards,IR_right,IR_left,IR_more_dist,IR_less_dist};
+int IR_all_size = 8;
 
 bool is_moving = false;
-unsigned long last_stopped = 0;
+unsigned long last_moved = 0;
 void setup() {
   Serial.begin(9600);
   irrecv.enableIRIn();
@@ -43,40 +48,87 @@ void setup() {
 void loop() {
   all_run();
   if(ir_results.value == IR_forward){
-    stepper_Right.moveTo(stepper_Right.currentPosition()+10000);
-    stepper_Left.moveTo(stepper_Right.currentPosition()-10000);
-    is_moving = true;
+    if(move_dist <= 0){
+      stepper_Right.moveTo(stepper_Right.currentPosition()+10000);
+      stepper_Left.moveTo(stepper_Right.currentPosition()-10000);
+    }else{
+      if(check_command_update()){
+        stepper_Right.moveTo(stepper_Right.currentPosition()+move_dist);
+        stepper_Left.moveTo(stepper_Right.currentPosition()-move_dist);
+      }
+    }
   }
   else if(ir_results.value == IR_backwards){
-    stepper_Right.moveTo(stepper_Right.currentPosition()-10000);
-    stepper_Left.moveTo(stepper_Right.currentPosition()+10000);
-    is_moving = true;
+    if(move_dist <= 0){
+      stepper_Right.moveTo(stepper_Right.currentPosition()-10000);
+      stepper_Left.moveTo(stepper_Right.currentPosition()+10000);
+    }else{
+      if(check_command_update()){
+        stepper_Right.moveTo(stepper_Right.currentPosition()-move_dist);
+        stepper_Left.moveTo(stepper_Right.currentPosition()+move_dist);
+      }
+    }
   }
   else if(ir_results.value == IR_right){
-    stepper_Right.moveTo(stepper_Right.currentPosition()-10000);
-    stepper_Left.moveTo(stepper_Right.currentPosition()-10000);
-    is_moving = true;
+    if(move_dist <= 0){
+      stepper_Right.moveTo(stepper_Right.currentPosition()-10000);
+      stepper_Left.moveTo(stepper_Right.currentPosition()-10000);
+    }else{
+      if(check_command_update()){
+        stepper_Right.moveTo(stepper_Right.currentPosition()-move_dist);
+        stepper_Left.moveTo(stepper_Right.currentPosition()-move_dist);
+      }
+    }
   }
   else if(ir_results.value == IR_left){
-    stepper_Right.moveTo(stepper_Right.currentPosition()+10000);
-    stepper_Left.moveTo(stepper_Right.currentPosition()+10000);
-    is_moving = true;
+    if(move_dist <= 0){
+      stepper_Right.moveTo(stepper_Right.currentPosition()+10000);
+      stepper_Left.moveTo(stepper_Right.currentPosition()+10000);
+    }else{
+      if(check_command_update()){
+        stepper_Right.moveTo(stepper_Right.currentPosition()+move_dist);
+        stepper_Left.moveTo(stepper_Right.currentPosition()+move_dist);
+      }
+    }
+  }
+  else if(ir_results.value == IR_more_dist){
+    if(check_command_update()){
+      move_dist += move_dist_change;
+    }
+  }
+  else if(ir_results.value == IR_less_dist){
+    if(check_command_update()){
+      move_dist -= move_dist_change;
+      if(move_dist<0){
+        move_dist = 0;
+      }
+    }
   }
   else{
     if(ir_results.value == IR_stop){
       stepper_Right.moveTo(stepper_Right.currentPosition());
       stepper_Left.moveTo(stepper_Left.currentPosition());
-      if(is_moving == true){
-        last_stopped = millis();
-        is_moving = false;
-      }
     }
   }
-  if((!is_moving)&&(millis()-last_stopped >10000)){
+  if((stepper_Right.distanceToGo()!=0)||(stepper_Left.distanceToGo()!=0)){
+    is_moving = true;
+    last_moved = millis();
+  }else{
+    is_moving = false;
+  }
+  if((!is_moving)&&(millis()-last_moved >30*1000)){
     disableMotor(stp_R_pins);
     disableMotor(stp_L_pins);
   }
   
+}
+bool check_command_update(){
+  if(move_count_id_now!=move_count_id_last){
+    move_count_id_last = move_count_id_now;
+    return true;
+  }else{
+    return false;
+  }
 }
 void wait_one_step(AccelStepper stepper){
   while(stepper.distanceToGo()!=0){
@@ -96,6 +148,7 @@ void update_receve(){
     }
     ir_results = _ir_results;
     Serial.println(ir_results.value, HEX);
+    move_count_id_now += 1;
     irrecv.resume(); // Receive  the next value
   }
 }
