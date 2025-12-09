@@ -15,8 +15,8 @@ int acceleration = 50;
 
 IRrecv irrecv(RECV_PIN);
 decode_results  ir_results,_ir_results;
-int move_dist = move_dist_change*4;
 int move_dist_change = 465;
+int move_dist = move_dist_change*4;
 int move_count_id_now = 0;
 int move_count_id_last = 0;
 #define IR_blank 0xFFFFFFFF
